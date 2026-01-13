@@ -1,1 +1,1 @@
-docker build -t my-web-app 
+docker build -t sample-web-app 

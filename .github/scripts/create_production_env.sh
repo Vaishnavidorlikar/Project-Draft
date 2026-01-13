@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-OWNER="${OWNER:-}"  # e.g. my-org
+OWNER="${OWNER:-}"  # e.g. sample-org
 REPO="${REPO:-}"    # e.g. Project-Draft
 ENV="production"
 TOKEN="${GH_TOKEN:-}" # needs repo admin permission

@@ -1,13 +1,13 @@
-# GitHub Workflows & Required Secrets ✅
+# GitHub Workflows & Required Secrets
 
 This repository now includes GitHub Actions workflows to make each subproject runnable and testable via GitHub CI. Below is a summary of the workflows and the secrets you should configure in your repository Settings → Secrets & variables → Actions.
 
 ## Workflows created
-- `.github/workflows/python-ci.yml` — Runs pytest across Python projects (Containerized web app, Serverless, ML model, Monitoring stack, Automated deployment). ✅
-- `.github/workflows/docker-build.yml` — Builds and pushes Docker images to GitHub Container Registry (GHCR). Triggered on pushes in Docker projects. ✅
-- `.github/workflows/terraform.yml` — Runs `terraform fmt`, `terraform validate` and `terraform plan` for the serverless Terraform folder. `apply` requires manual dispatch and a GCP service account (`GCP_SERVICE_ACCOUNT_KEY`). ✅
-- `.github/workflows/gradle.yml` — Builds the Java project with Gradle. ✅
-- `.github/workflows/fastlane.yml` — Runs Fastlane-related commands for the mobile app and runs `pytest -k "not appium"` to avoid device-dependent tests by default. ✅
+- `.github/workflows/python-ci.yml` — Runs pytest across Python projects (Containerized web app, Serverless, ML model, Monitoring stack, Automated deployment).
+- `.github/workflows/docker-build.yml` — Builds and pushes Docker images to GitHub Container Registry (GHCR). Triggered on pushes in Docker projects.
+- `.github/workflows/terraform.yml` — Runs `terraform fmt`, `terraform validate` and `terraform plan` for the serverless Terraform folder. `apply` requires manual dispatch and a GCP service account (`GCP_SERVICE_ACCOUNT_KEY`).
+- `.github/workflows/gradle.yml` — Builds the Java project with Gradle.
+- `.github/workflows/fastlane.yml` — Runs Fastlane-related commands for the mobile app and runs `pytest -k "not appium" to avoid device-dependent tests by default.
 
 ## Recommended secrets
 - `GITHUB_TOKEN` — automatically available to workflows. Used to push to GHCR for the same repo.

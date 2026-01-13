@@ -7,7 +7,7 @@ The Docker workflow now builds container images and pushes them to Artifact Regi
 
 - `GCP_SERVICE_ACCOUNT_KEY` — JSON contents of a Google Cloud service account key with permissions to write to Artifact Registry (stored as a secret string).
 - `GCP_PROJECT` — Google Cloud project ID where the Artifact Registry repository exists.
-- `AR_REPOSITORY` — Artifact Registry repository name (e.g., `my-repo`).
+- `AR_REPOSITORY` — Artifact Registry repository name (e.g., `sample-repo`).
 - `IMAGE_REGION` — Artifact Registry region portion used in the host, e.g., `us-central1` (the workflow uses `${IMAGE_REGION}-docker.pkg.dev`).
 
 Example image name format:
@@ -47,14 +47,18 @@ Additional secrets for Terraform GCP plan and apply:
 
 ---
 
-## Project overview & how CI ties things together ✅
+## Project overview & how CI ties things together
 This repository contains independent example projects. They do not run as a single monolith; CI is set up so each subproject's pipelines run when files in that subproject change. High-level notes:
 
 - **Independent projects**: Each top-level folder (for example, `Containerized Web Application using Docker and Kubernetes`, `Deploying a Serverless Application using GCP Cloud Functions and Terraform`, `Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes `, etc.) is self-contained with its own Dockerfile/terraform/k8s manifests and smoke tests.
 
 - **CI triggers & concurrency**: Workflows are configured with `paths` filters so only relevant workflows run on a push/PR. Multiple workflows may run in parallel when a change touches several folders (e.g., `python-ci`, `docker-build`, and `terraform` can run concurrently).
 
-- **Build → Deploy coordination**: To avoid race conditions where a deploy starts before an image is pushed, the Cloud Run deploy workflow is intentionally triggered on successful completion of the Docker build workflow (`workflow_run`) in addition to push/dispatch triggers. This helps ensure deploys use images that were built for the same commit.
+- **Build → Deploy coordination**: To avoid race conditions where a deploy starts before an image is pushed, the Cloud Run and GKE deploy workflows are triggered on successful completion of the Docker build workflow (`workflow_run`) in addition to push/dispatch triggers. This helps ensure deploys use images that were built for the same commit.
+
+## CI flow (ASCII diagram)
+Build (docker-build) [push images]  --->  Deploy (cloud-run-deploy / gke-deploy)
+If build fails ----------------------------^ (deploy will not run when triggered by workflow_run unless build succeeded)
 
 - **Manual gating**: The Terraform `apply` job is gated by `workflow_dispatch` and targets the `production` environment (recommended to require manual approvals for production changes).
 
@@ -64,7 +68,7 @@ This repository contains independent example projects. They do not run as a sing
 - `IMAGE_REGION` — Artifact Registry / Cloud Run region (e.g., `us-central1`).
 - `AR_REPOSITORY` — Artifact Registry repository name.
 
-## How to run locally 🔧
+## How to run locally
 - Run all tests: `pytest -q`
 - Build a Docker image and push locally (example):
   - `docker build -t us-central1-docker.pkg.dev/<GCP_PROJECT>/<AR_REPOSITORY>/containerized-webapp:local .` inside the `Containerized Web Application using Docker and Kubernetes` folder
@@ -74,7 +78,7 @@ This repository contains independent example projects. They do not run as a sing
   - `gcloud auth activate-service-account --key-file=$GCP_SERVICE_ACCOUNT_KEY`
   - `terraform init` && `terraform plan -var="project=$GCP_PROJECT"`
 
-## Notes & gotchas ⚠️
+## Notes & gotchas
 - The CI matrix builds several images in parallel; if you rely on a deploy workflow to pick up newly pushed images, prefer the `workflow_run` trigger or add a small delay / check for image existence to avoid race conditions.
 - Some tests will be skipped in CI runners if Google Cloud libraries are not installed locally (tests use `pytest.skip` in that case).
 

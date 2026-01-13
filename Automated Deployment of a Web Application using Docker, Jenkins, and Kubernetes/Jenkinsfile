@@ -4,13 +4,13 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'docker build -t my-web-app .'
+                sh 'docker build -t sample-web-app .'
             }
         }
         stage('Push to Docker Hub') {
             steps {
-                sh 'docker tag my-web-app $DOCKER_HUB_USERNAME/my-web-app'
-                sh 'docker push $DOCKER_HUB_USERNAME/my-web-app'
+                sh 'docker tag sample-web-app $DOCKER_HUB_USERNAME/sample-web-app'
+                sh 'docker push $DOCKER_HUB_USERNAME/sample-web-app'
             }
         }
         stage('Deploy to Kubernetes') {

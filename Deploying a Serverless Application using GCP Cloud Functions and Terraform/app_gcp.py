@@ -10,7 +10,7 @@ firestore_client = firestore.Client()
 
 def lambda_handler(request: Request):
     # Write a simple object to a Storage bucket
-    bucket_name = 'my-function-bucket'
+    bucket_name = 'sample-function-bucket'
     try:
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob('hello.txt')
@@ -21,7 +21,7 @@ def lambda_handler(request: Request):
 
     # Write a simple doc to Firestore
     try:
-        doc_ref = firestore_client.collection('my-collection').document('test')
+        doc_ref = firestore_client.collection('sample-collection').document('test')
         doc_ref.set({'name': 'John', 'age': 30})
     except Exception:
         pass
