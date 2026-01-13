@@ -1,5 +1,2 @@
-#Create a Kubernetes cluster using AWS
-aws eks create-cluster 
---name my-cluster 
---region us-west-2 
---role-arn <your-eks-cluster-role-arn>
+# Create a Kubernetes cluster using GKE
+gcloud container clusters create my-cluster --zone us-central1-a --num-nodes=3

@@ -1,0 +1,39 @@
+name: Python CI
+
+on:
+  push:
+    paths:
+      - " Containerized Web Application using Docker and Kubernetes/**"
+      - " Deploying a Serverless Application using GCP Cloud Functions and Terraform/**"
+      - " Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes /**"
+      - " Implementing a Monitoring and Logging System using Prometheus, Grafana, and ELK Stack/**"
+      - "Automated Deployment of a Web Application using Docker, Jenkins, and Kubernetes/**"
+  pull_request:
+    paths:
+      - " Containerized Web Application using Docker and Kubernetes/**"
+      - " Deploying a Serverless Application using GCP Cloud Functions and Terraform/**"
+      - " Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes /**"
+      - " Implementing a Monitoring and Logging System using Prometheus, Grafana, and ELK Stack/**"
+      - "Automated Deployment of a Web Application using Docker, Jenkins, and Kubernetes/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f "requirements.txt" ]; then pip install -r requirements.txt || true; fi
+          pip install pytest
+      - name: Run pytest
+        run: |
+          # Run all tests across the repository. Tests have small smoke tests in each project.
+          pytest -q
