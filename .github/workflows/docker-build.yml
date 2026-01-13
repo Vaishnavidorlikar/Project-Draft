@@ -1,0 +1,57 @@
+name: Build and push Docker images to Google Artifact Registry
+
+on:
+  push:
+    paths:
+      - " Containerized Web Application using Docker and Kubernetes/**"
+      - "Automated Deployment of a Web Application using Docker, Jenkins, and Kubernetes/**"
+      - " Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes /**"
+      - "Implementing a CI CD Pipeline for a Microservices-based Application using Jenkins, Docker, and Kubernetes/**"
+  workflow_dispatch: {}
+
+env:
+  IMAGE_TAG: ${{ github.sha }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - image: containerized-webapp
+            dir: "Containerized Web Application using Docker and Kubernetes"
+          - image: automated-webapp
+            dir: "Automated Deployment of a Web Application using Docker, Jenkins, and Kubernetes"
+          - image: ml-model
+            dir: "Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes "
+          - image: microservices
+            dir: "Implementing a CI CD Pipeline for a Microservices-based Application using Jenkins, Docker, and Kubernetes"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud --quiet auth configure-docker ${IMAGE_REGION}-docker.pkg.dev
+        env:
+          IMAGE_REGION: ${{ secrets.IMAGE_REGION }}
+
+      - name: Build and push image for ${{ matrix.image }}
+        working-directory: ${{ matrix.dir }}
+        uses: docker/build-push-action@v4
+        with:
+          push: true
+          tags: ${{ secrets.IMAGE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ secrets.AR_REPOSITORY }}/${{ matrix.image }}:${{ env.IMAGE_TAG }}
+
+      - name: Output image reference
+        run: echo "Pushed image: ${{ secrets.IMAGE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ secrets.AR_REPOSITORY }}/${{ matrix.image }}:${{ env.IMAGE_TAG }}"

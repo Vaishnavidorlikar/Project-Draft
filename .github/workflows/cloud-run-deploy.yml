@@ -1,0 +1,70 @@
+name: Deploy to Cloud Run
+
+on:
+  push:
+    paths:
+      - " Containerized Web Application using Docker and Kubernetes/**"
+      - "Automated Deployment of a Web Application using Docker, Jenkins, and Kubernetes/**"
+      - " Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes /**"
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["Build and push Docker images to Google Artifact Registry"]
+    types: [completed]
+
+jobs:
+  deploy:
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - service: containerized-webapp
+            dir: "Containerized Web Application using Docker and Kubernetes"
+          - service: automated-webapp
+            dir: "Automated Deployment of a Web Application using Docker, Jenkins, and Kubernetes"
+          - service: ml-model
+            dir: "Deploying a Machine Learning Model using TensorFlow, Docker, and Kubernetes "
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Set default project
+        run: |
+          gcloud config set project ${{ secrets.GCP_PROJECT }}
+
+      - name: Deploy to Cloud Run (canary)
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Deploy new revision without traffic
+        run: |
+          IMAGE=${{ secrets.IMAGE_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT }}/${{ secrets.AR_REPOSITORY }}/${{ matrix.service }}:${{ github.sha }}
+          echo "Deploying $IMAGE (no-traffic)..."
+          gcloud run deploy ${{ matrix.service }} --image $IMAGE --region ${{ secrets.IMAGE_REGION }} --platform managed --project ${{ secrets.GCP_PROJECT }} --no-traffic --quiet
+
+      - name: Determine revisions
+        id: revs
+        run: |
+          # New revision is the most recent one
+          NEW_REV=$(gcloud run revisions list --service=${{ matrix.service }} --region=${{ secrets.IMAGE_REGION }} --project=${{ secrets.GCP_PROJECT }} --sort-by=~createTime --limit=1 --format="value(metadata.name)")
+          OLD_REV=$(gcloud run revisions list --service=${{ matrix.service }} --region=${{ secrets.IMAGE_REGION }} --project=${{ secrets.GCP_PROJECT }} --filter="servingStatus=SERVING" --sort-by=~createTime --limit=1 --format="value(metadata.name)")
+          echo "NEW_REV=$NEW_REV" >> $GITHUB_OUTPUT
+          echo "OLD_REV=$OLD_REV" >> $GITHUB_OUTPUT
+
+      - name: Shift 10% traffic to new revision
+        run: |
+          echo "Shifting 10% traffic to ${{ steps.revs.outputs.NEW_REV }}"
+          gcloud run services update-traffic ${{ matrix.service }} --to-revisions=${{ steps.revs.outputs.NEW_REV }}=10,${{ steps.revs.outputs.OLD_REV }}=90 --region=${{ secrets.IMAGE_REGION }} --project=${{ secrets.GCP_PROJECT }} --quiet
+
+      - name: Wait and promote
+        run: |
+          echo "Waiting 30s to observe canary"
+          sleep 30
+          echo "Promoting new revision to 100%"
+          gcloud run services update-traffic ${{ matrix.service }} --to-revisions=${{ steps.revs.outputs.NEW_REV }}=100 --region=${{ secrets.IMAGE_REGION }} --project=${{ secrets.GCP_PROJECT }} --quiet

@@ -1,0 +1,28 @@
+name: Terraform (GCP) Apply
+
+on:
+  workflow_dispatch:
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Terraform Init
+        working-directory: "Deploying a Serverless Application using GCP Cloud Functions and Terraform"
+        env:
+          GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: terraform init -input=false
+      - name: Terraform Apply (gcp)
+        working-directory: "Deploying a Serverless Application using GCP Cloud Functions and Terraform"
+        env:
+          GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TF_VAR_project: ${{ secrets.GCP_PROJECT }}
+        run: terraform apply -auto-approve

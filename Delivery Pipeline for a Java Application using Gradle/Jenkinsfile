@@ -19,9 +19,8 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                withCredentials([aws(accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
-                    sh 'aws s3 cp build/libs/helloworld-1.0-SNAPSHOT.jar s3://my-bucket/'
-                }
+                // Using GCS instead of S3; ensure GCP credentials are available in the runner
+                sh 'gsutil cp build/libs/helloworld-1.0-SNAPSHOT.jar gs://my-bucket/'
             }
         }
     }

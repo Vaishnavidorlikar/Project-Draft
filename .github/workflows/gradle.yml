@@ -1,0 +1,25 @@
+name: Java Gradle CI
+
+on:
+  push:
+    paths:
+      - "Delivery Pipeline for a Java Application using Gradle/**"
+  pull_request:
+    paths:
+      - "Delivery Pipeline for a Java Application using Gradle/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Build with Gradle
+        run: |
+          chmod +x gradlew || true
+          if [ -f ./gradlew ]; then ./gradlew build --no-daemon; else gradle build --no-daemon; fi
+        working-directory: "Delivery Pipeline for a Java Application using Gradle"

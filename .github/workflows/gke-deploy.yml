@@ -1,0 +1,54 @@
+name: Deploy to GKE (optional)
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - "**/deployment.yaml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v0
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER }}
+          location: ${{ secrets.GKE_LOCATION }}
+          project_id: ${{ secrets.GCP_PROJECT }}
+
+      - name: Find and apply Kubernetes manifests
+        run: |
+          echo "Applying all deployment.yaml manifests..."
+          set -e
+          files=$(git ls-files "**/deployment.yaml") || true
+          if [ -z "$files" ]; then
+            echo "No deployment.yaml files found. Exiting."
+            exit 0
+          fi
+          for f in $files; do
+            echo "Applying $f"
+            kubectl apply -f "$f"
+            # Try to find deployment name to wait for rollout (best-effort)
+            dep=$(yq e '.metadata.name // .spec.template.metadata.labels.app // ""' "$f" | head -n1)
+            if [ -n "$dep" ]; then
+              echo "Waiting rollout status for $dep"
+              kubectl rollout status deployment/$dep --timeout=120s || true
+            fi
+          done
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
+      - name: Confirm deployments
+        run: |
+          kubectl get deployments --all-namespaces
+
+      - name: Notify
+        run: echo "GKE deploy finished (manual verification recommended)"

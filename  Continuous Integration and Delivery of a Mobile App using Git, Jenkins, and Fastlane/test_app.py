@@ -1,6 +1,10 @@
 # tests/test_app.py
 import pytest
-from appium import webdriver
+
+try:
+    from appium import webdriver
+except Exception:
+    pytest.skip("Appium not available in CI runner; skipping device tests", allow_module_level=True)
 
 @pytest.fixture
 def driver():

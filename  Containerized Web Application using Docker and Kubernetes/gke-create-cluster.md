@@ -1,0 +1,2 @@
+# Create a Kubernetes cluster using GKE
+gcloud container clusters create my-cluster --zone us-central1-a --num-nodes=3

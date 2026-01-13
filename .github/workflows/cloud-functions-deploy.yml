@@ -1,0 +1,28 @@
+name: Deploy Cloud Function (GCP)
+
+on:
+  push:
+    paths:
+      - "Deploying a Serverless Application using GCP Cloud Functions and Terraform/**"
+  workflow_dispatch: {}
+
+jobs:
+  deploy-function:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Set project
+        run: gcloud config set project ${{ secrets.GCP_PROJECT }}
+      - name: Deploy Cloud Function (HTTP)
+        run: |
+          gcloud functions deploy hello-function \
+            --region=${{ secrets.IMAGE_REGION }} \
+            --runtime=python311 \
+            --entry-point=lambda_handler \
+            --source=./"Deploying a Serverless Application using GCP Cloud Functions and Terraform" \
+            --trigger-http \
+            --quiet
