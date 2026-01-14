@@ -1,0 +1,60 @@
+name: Terraform (GCP) CI
+
+on:
+  push:
+    paths:
+      - "Deploying a Serverless Application using GCP Cloud Functions and Terraform/**"
+  pull_request:
+    paths:
+      - "Deploying a Serverless Application using GCP Cloud Functions and Terraform/**"
+  workflow_dispatch: {}
+
+jobs:
+  fmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Terraform fmt (gcp)
+        working-directory: "Deploying a Serverless Application using GCP Cloud Functions and Terraform"
+        run: terraform fmt -check -diff -write=false -list=false -recursive
+
+  validate:
+    runs-on: ubuntu-latest
+    needs: [fmt]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Terraform Init & Validate (gcp)
+        working-directory: "Deploying a Serverless Application using GCP Cloud Functions and Terraform"
+        env:
+          GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+        run: |
+          terraform init -input=false
+          terraform validate
+
+  plan:
+    runs-on: ubuntu-latest
+    needs: [validate]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Terraform Plan (gcp)
+        working-directory: "Deploying a Serverless Application using GCP Cloud Functions and Terraform"
+        env:
+          GOOGLE_CLOUD_KEYFILE_JSON: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          TF_VAR_project: ${{ secrets.GCP_PROJECT }}
+        run: |
+          terraform init -input=false
+          terraform plan -no-color -out=plan.tfplan

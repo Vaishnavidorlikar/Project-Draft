@@ -6,7 +6,7 @@ spec:
   replicas: 1
   serviceMonitorSelector:
     matchLabels:
-      app: my-web-app
+      app: sample-web-app
 
 ---
 apiVersion: integreatly.com/v1alpha1
