@@ -5,13 +5,13 @@
 set -euo pipefail
 
 OWNER="${OWNER:-}"  # e.g. sample-org
-REPO="${REPO:-}"    # e.g. Project-Draft
+REPO="${REPO:-}"    # e.g. project-draft
 ENV="production"
 TOKEN="${GH_TOKEN:-}" # needs repo admin permission
 
 if [ -z "$OWNER" ] || [ -z "$REPO" ]; then
   echo "Please set OWNER and REPO environment variables."
-  echo "Example: OWNER=Vaishnavidorlikar REPO=Project-Draft GH_TOKEN=... $0"
+  echo "Example: OWNER=Vaishnavidorlikar REPO=project-draft GH_TOKEN=... $0"
   exit 1
 fi
 

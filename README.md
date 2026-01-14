@@ -1,4 +1,4 @@
-# Project-Draft
+# project-draft
 
 This repository contains multiple sample deployment projects (Docker/Kubernetes, Serverless/Terraform, ML model, Java Gradle app, Mobile Fastlane pipeline). I updated the CI to push Docker images to **Google Cloud Artifact Registry**.
 
